@@ -36,75 +36,54 @@ void produceGradient(cv::Mat & inMat, cv::Mat & outMat)
   }
 }
 
-void runFastCarve(std::string & fname, int newWidth, int newHeight)
+void precomputeVertSeams(cv::Mat & infile)
 {
   using namespace cv;
 
-  Mat infile = imread(fname);
   Mat infileGray;
   cvtColor(infile, infileGray, CV_BGR2GRAY);
   int xSize = infile.size().width;
   int ySize = infile.size().height;
 
-  if (newWidth > 2 * xSize || newHeight > 2 * ySize)
-  {
-    std::cout << "Can only expand up to twice the original size"
-              << std::endl;
-    return;
-  }
-  else if (newWidth < 0 || newHeight < 0)
-  {
-    std::cout << "Dimensions must be non-negative" << std::endl;
-    return;
-  }
-  else if (newWidth == 0 && newHeight == 0)
-  {
-    std::cout << "At least one dimension must be non-zero" << std::endl;
-    return;
-  }
+  Mat gradMat(ySize, xSize, infileGray.type());
+  produceGradient(infileGray, gradMat);
+  //imwrite("gradient.jpg", gradMat);
 
-  if (newHeight == 0)
-  {
-    Mat gradMat(ySize, xSize, infileGray.type());
-    produceGradient(infileGray, gradMat);
+  Vert::precomputeSeams(infile, gradMat);
+}
 
-    Mat vertMat(ySize, newWidth, infile.type());
-    Vert::precomputeSeams(infile, gradMat);
-    Vert::runSeamRemove(infile, vertMat, newWidth, newHeight);
+void precomputeHoriSeams(cv::Mat & infile)
+{
+  using namespace cv;
 
-    imwrite("output.jpg", vertMat);
-  }
-  else if (newWidth == 0)
-  {
-    Mat gradMat(ySize, xSize, infileGray.type());
-    produceGradient(infileGray, gradMat);
+  Mat infileGray;
+  cvtColor(infile, infileGray, CV_BGR2GRAY);
+  int xSize = infile.size().width;
+  int ySize = infile.size().height;
 
-    Mat horiMat(newHeight, xSize, infile.type());
-    Hori::precomputeSeams(infile, gradMat);
-    Hori::runSeamRemove(infile, horiMat, newWidth, newHeight);
+  Mat gradMat(ySize, xSize, infileGray.type());
+  produceGradient(infileGray, gradMat);
+  //imwrite("gradient.jpg", gradMat);
 
-    imwrite("output.jpg", horiMat);
-  }
-  else
-  {
-    Mat gradMat(ySize, xSize, infileGray.type());
-    produceGradient(infileGray, gradMat);
-    //imwrite("gradient.jpg", gradMat);
+  Hori::precomputeSeams(infile, gradMat);
+}
 
-    Mat vertMat(ySize, newWidth, infile.type());
-    Vert::precomputeSeams(infile, gradMat);
-    Vert::runSeamRemove(infile, vertMat, newWidth, newHeight);
+cv::Mat runVertFastCarve(cv::Mat & infile, int newWidth)
+{
+  int ySize = infile.size().height;
 
-    Mat vertGray;
-    cvtColor(vertMat, vertGray, CV_BGR2GRAY);
-    Mat vertGradMat(ySize, newWidth, vertGray.type());
-    produceGradient(vertGray, vertGradMat);
+  cv::Mat vertMat(ySize, newWidth, infile.type());
+  Vert::runSeamRemove(infile, vertMat, newWidth, 0);
+  return vertMat;
+}
 
-    Mat outMat(newHeight, newWidth, infile.type());
-    Hori::precomputeSeams(vertMat, vertGradMat);
-    Hori::runSeamRemove(vertMat, outMat, newWidth, newHeight);
-    imwrite("output.jpg", outMat);
-  }
+cv::Mat runHoriFastCarve(cv::Mat & infile, int newHeight)
+{
+  int xSize = infile.size().width;
+
+  cv::Mat horiMat(newHeight, xSize, infile.type());
+  Hori::runSeamRemove(infile, horiMat, 0, newHeight);
+  return horiMat;
 }
 
 }

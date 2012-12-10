@@ -1,4 +1,6 @@
 #include <iostream>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 #include "carve.h"
 
@@ -15,7 +17,34 @@ int main(int argc, char *argv[])
   int newHeight = atoi(argv[3]);
   char buf[512];
 
-  Carve::runFastCarve(fname, newWidth, newHeight);
+  cv::Mat infile = cv::imread(fname);
+
+  int xSize = infile.size().width;
+  int ySize = infile.size().height;
+  if (newWidth > 2 * xSize || newHeight > 2 * ySize)
+  {
+    std::cout << "Can only expand up to twice the original size"
+              << std::endl;
+    return 0;
+  }
+  else if (newWidth < 0 || newHeight < 0)
+  {
+    std::cout << "Dimensions must be non-negative" << std::endl;
+    return 0;
+  }
+  else if (newWidth == 0 && newHeight == 0)
+  {
+    std::cout << "At least one dimension must be non-zero" << std::endl;
+    return 0;
+  }
+
+  Carve::precomputeVertSeams(infile);
+  cv::Mat interMat = Carve::runVertFastCarve(infile, newWidth);
+
+  Carve::precomputeHoriSeams(interMat);
+  cv::Mat outMat = Carve::runHoriFastCarve(interMat, newHeight);
+
+  imwrite("output.jpg", outMat);
 
   //namedWindow( "Display window", CV_WINDOW_AUTOSIZE );
   //imshow( "Display window", b );
