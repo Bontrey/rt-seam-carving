@@ -19,8 +19,9 @@ struct Match
 };
 typedef std::vector<std::vector<Match> > MatchMat;
 
-void runFastCarve(cv::Mat & infile, cv::Mat & outMat, cv::Mat & gradMat,
-                  int newWidth, int newHeight);
+void precomputeSeams(cv::Mat & infile, cv::Mat & gradMat);
+void runSeamRemove(cv::Mat & infile, cv::Mat & outMat,
+                   int newWidth, int newHeight);
 }
 
 #define _CARVE_HORI

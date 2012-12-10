@@ -13,6 +13,9 @@
 namespace Hori
 {
 
+std::vector<std::pair<int,int> > costs;
+Vector2D seams;
+
 int calculateWeight(cv::Mat & energyMat, Vector2D & AMat, Vector2D & MMat,
                     int col, int row1, int row2)
 {
@@ -84,12 +87,11 @@ void calculateSeamCosts(MatchMat & matches,
   {
     int cost = 0;
     int y = j;
-    seams[j][0] = y;
     for (int i = 0; i < xSize; i++)
     {
+      seams[j][i] = y;
       cost += matches[y][i].weight;
       y = matches[y][i].nextY;
-      seams[j][i+1] = y;
     }
     costs[j].first = cost;
     costs[j].second = j;
@@ -231,8 +233,7 @@ void seamRemove(cv::Mat & infile, cv::Mat & outMat,
   }
 }
 
-void runFastCarve(cv::Mat & infile, cv::Mat & outMat, cv::Mat & gradMat,
-                  int newWidth, int newHeight)
+void precomputeSeams(cv::Mat & infile, cv::Mat & gradMat)
 {
   using namespace cv;
 
@@ -242,14 +243,18 @@ void runFastCarve(cv::Mat & infile, cv::Mat & outMat, cv::Mat & gradMat,
   MatchMat matches(ySize, std::vector<Match>(xSize));
   calculateMatchings(gradMat, matches);
 
-  std::vector<std::pair<int,int> > costs(ySize);
-  Vector2D seams(ySize, std::vector<int>(xSize));
+  costs.resize(ySize);
+  seams.resize(ySize, std::vector<int>(xSize));
   calculateSeamCosts(matches, costs, seams);
 
   //Mat weightMat(ySize, xSize, infile.type());
   //calculateWeightMat(costs, matches, weightMat);
   //imwrite("weights_hori.jpg", weightMat);
+}
 
+void runSeamRemove(cv::Mat & infile, cv::Mat & outMat,
+                   int newWidth, int newHeight)
+{
   seamRemove(infile, outMat, costs, seams, newHeight);
 }
 

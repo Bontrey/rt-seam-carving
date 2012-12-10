@@ -69,7 +69,8 @@ void runFastCarve(std::string & fname, int newWidth, int newHeight)
     produceGradient(infileGray, gradMat);
 
     Mat vertMat(ySize, newWidth, infile.type());
-    Vert::runFastCarve(infile, vertMat, gradMat, newWidth, newHeight);
+    Vert::precomputeSeams(infile, gradMat);
+    Vert::runSeamRemove(infile, vertMat, newWidth, newHeight);
 
     imwrite("output.jpg", vertMat);
   }
@@ -79,7 +80,8 @@ void runFastCarve(std::string & fname, int newWidth, int newHeight)
     produceGradient(infileGray, gradMat);
 
     Mat horiMat(newHeight, xSize, infile.type());
-    Hori::runFastCarve(infile, horiMat, gradMat, newWidth, newHeight);
+    Hori::precomputeSeams(infile, gradMat);
+    Hori::runSeamRemove(infile, horiMat, newWidth, newHeight);
 
     imwrite("output.jpg", horiMat);
   }
@@ -90,7 +92,8 @@ void runFastCarve(std::string & fname, int newWidth, int newHeight)
     //imwrite("gradient.jpg", gradMat);
 
     Mat vertMat(ySize, newWidth, infile.type());
-    Vert::runFastCarve(infile, vertMat, gradMat, newWidth, newHeight);
+    Vert::precomputeSeams(infile, gradMat);
+    Vert::runSeamRemove(infile, vertMat, newWidth, newHeight);
 
     Mat vertGray;
     cvtColor(vertMat, vertGray, CV_BGR2GRAY);
@@ -98,7 +101,8 @@ void runFastCarve(std::string & fname, int newWidth, int newHeight)
     produceGradient(vertGray, vertGradMat);
 
     Mat outMat(newHeight, newWidth, infile.type());
-    Hori::runFastCarve(vertMat, outMat, vertGradMat, newWidth, newHeight);
+    Hori::precomputeSeams(vertMat, vertGradMat);
+    Hori::runSeamRemove(vertMat, outMat, newWidth, newHeight);
     imwrite("output.jpg", outMat);
   }
 }
