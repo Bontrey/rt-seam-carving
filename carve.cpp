@@ -48,30 +48,59 @@ void runFastCarve(std::string & fname, int newWidth, int newHeight)
 
   if (newWidth > 2 * xSize || newHeight > 2 * ySize)
   {
-    std::cout << "Can only expand up to twice the original size" << std::endl;
+    std::cout << "Can only expand up to twice the original size"
+              << std::endl;
     return;
   }
   else if (newWidth < 0 || newHeight < 0)
   {
-    std::cout << "Dimensions must be positive" << std::endl;
+    std::cout << "Dimensions must be non-negative" << std::endl;
+    return;
+  }
+  else if (newWidth == 0 && newHeight == 0)
+  {
+    std::cout << "At least one dimension must be non-zero" << std::endl;
     return;
   }
 
-  Mat gradMat(ySize, xSize, infileGray.type());
-  produceGradient(infileGray, gradMat);
-  //imwrite("gradient.jpg", gradMat);
+  if (newHeight == 0)
+  {
+    Mat gradMat(ySize, xSize, infileGray.type());
+    produceGradient(infileGray, gradMat);
 
-  Mat vertMat(ySize, newWidth, infile.type());
-  Vert::runFastCarve(infile, vertMat, gradMat, newWidth, newHeight);
+    Mat vertMat(ySize, newWidth, infile.type());
+    Vert::runFastCarve(infile, vertMat, gradMat, newWidth, newHeight);
 
-  Mat vertGray;
-  cvtColor(vertMat, vertGray, CV_BGR2GRAY);
-  Mat vertGradMat(ySize, newWidth, vertGray.type());
-  produceGradient(vertGray, vertGradMat);
+    imwrite("output.jpg", vertMat);
+  }
+  else if (newWidth == 0)
+  {
+    Mat gradMat(ySize, xSize, infileGray.type());
+    produceGradient(infileGray, gradMat);
 
-  Mat outMat(newHeight, newWidth, infile.type());
-  Hori::runFastCarve(vertMat, outMat, vertGradMat, newWidth, newHeight);
-  imwrite("output.jpg", outMat);
+    Mat horiMat(newHeight, xSize, infile.type());
+    Hori::runFastCarve(infile, horiMat, gradMat, newWidth, newHeight);
+
+    imwrite("output.jpg", horiMat);
+  }
+  else
+  {
+    Mat gradMat(ySize, xSize, infileGray.type());
+    produceGradient(infileGray, gradMat);
+    //imwrite("gradient.jpg", gradMat);
+
+    Mat vertMat(ySize, newWidth, infile.type());
+    Vert::runFastCarve(infile, vertMat, gradMat, newWidth, newHeight);
+
+    Mat vertGray;
+    cvtColor(vertMat, vertGray, CV_BGR2GRAY);
+    Mat vertGradMat(ySize, newWidth, vertGray.type());
+    produceGradient(vertGray, vertGradMat);
+
+    Mat outMat(newHeight, newWidth, infile.type());
+    Hori::runFastCarve(vertMat, outMat, vertGradMat, newWidth, newHeight);
+    imwrite("output.jpg", outMat);
+  }
 }
 
 }
